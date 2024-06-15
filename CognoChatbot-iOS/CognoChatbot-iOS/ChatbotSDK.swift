@@ -53,6 +53,7 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
                     Constants.isTokenVerify = true
                     
                     DispatchQueue.main.async {
+                        self.dispWebView(viewController: viewController)
                         completion(true)
                     }
                 } else {
@@ -168,6 +169,8 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
             webViewController.modalPresentationStyle = .fullScreen
             viewController.present(webViewController, animated: true, completion: nil)
             webViewGlobal = wv
+
+            webViewController.view.addSubview(wv)
         }
     }
     
