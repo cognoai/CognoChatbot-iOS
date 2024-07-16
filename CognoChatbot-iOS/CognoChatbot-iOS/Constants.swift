@@ -18,4 +18,5 @@ public class Constants {
     public static var mobileChatbotSessionID = ""
     public static var mobileLiveChatSessionID = ""
     public static var chatbotSelectedLanguage = "en"
+    public static var customParams = ""
 }
