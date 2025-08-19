@@ -123,6 +123,7 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
             let config: WKWebViewConfiguration = WKWebViewConfiguration()
             config.preferences.javaScriptCanOpenWindowsAutomatically = true
             config.userContentController.add(self, name: "close")
+            config.userContentController.add(self, name: "minimize")
             config.userContentController.add(self, name: "speechToText")
             config.userContentController.add(self, name: "textToVoice")
             config.userContentController.add(self, name: "terminateTextToVoice")
@@ -264,6 +265,8 @@ extension ChatbotSDK: WKScriptMessageHandler {
                 self.webViewGlobal.cleanAllCookies()
                 self.webViewGlobal.refreshCookies()
             }
+        } else if message.name == "minimize" {
+            webViewController.dismiss(animated: true, completion: nil)
         } else if message.name == "speechToText" {
 
             startRecording()
