@@ -318,7 +318,8 @@ extension ChatbotSDK: WKScriptMessageHandler {
         } else if message.name == "terminateTextToVoice" {
             synth.stopSpeaking(at: .immediate)
         } else if message.name == "reloadChatbot" {
-            Constants.mobileChatbotSessionID  = ""
+            // comment this line as user id should not be reset while reloading chatbot
+            // Constants.mobileChatbotSessionID  = ""
             Constants.mobileLiveChatSessionID = ""
             if let _url = URL(string: Constants.botUrl + "/chat/index/?id=" + Constants.botId + "&channel=iOS&mobile_session_id=" + Constants.mobileChatbotSessionID + "&livechat_session_id=" + Constants.mobileLiveChatSessionID + "&selected_language=" + Constants.chatbotSelectedLanguage) {
                 let request = URLRequest(url: _url)
