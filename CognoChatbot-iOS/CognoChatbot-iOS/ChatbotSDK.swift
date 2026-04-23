@@ -73,9 +73,10 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
     }
 
 // Check and expire livechat session id
-    public func verifyLiveChatSessionID(viewController: UIViewController) {
+    public func verifyLiveChatSessionID(completion: @escaping () -> ()) {
 
         if Constants.mobileLiveChatSessionID == "" {
+            completion()
             return
         }
 
@@ -95,9 +96,15 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
             guard let data = data,
                   let response = response as? HTTPURLResponse,
                   error == nil
-            else { return }
+            else {
+                DispatchQueue.main.async { completion() }
+                return
+            }
 
-            guard (200 ... 299) ~= response.statusCode else { return }
+            guard (200 ... 299) ~= response.statusCode else {
+                DispatchQueue.main.async { completion() }
+                return
+            }
 
             do {
                 let json = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [String:Any]
@@ -111,6 +118,8 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
             } catch let error as NSError {
                 print(error)
             }
+
+            DispatchQueue.main.async { completion() }
         }
 
         task.resume()
@@ -140,7 +149,7 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
             }
         }
         
-        verifyLiveChatSessionID(viewController: self)
+        verifyLiveChatSessionID { [self] in
         if Constants.isTokenVerify {
             let config: WKWebViewConfiguration = WKWebViewConfiguration()
             config.preferences.javaScriptCanOpenWindowsAutomatically = true
@@ -205,6 +214,7 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
             webViewGlobal = wv
 
             webViewController.view.addSubview(wv)
+        }
         }
     }
     
