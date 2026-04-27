@@ -73,9 +73,10 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
     }
 
 // Check and expire livechat session id
-    public func verifyLiveChatSessionID(viewController: UIViewController) {
+    public func verifyLiveChatSessionID(completion: @escaping () -> ()) {
 
         if Constants.mobileLiveChatSessionID == "" {
+            completion()
             return
         }
 
@@ -95,20 +96,30 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
             guard let data = data,
                   let response = response as? HTTPURLResponse,
                   error == nil
-            else { return }
+            else {
+                DispatchQueue.main.async { completion() }
+                return
+            }
 
-            guard (200 ... 299) ~= response.statusCode else { return }
+            guard (200 ... 299) ~= response.statusCode else {
+                DispatchQueue.main.async { completion() }
+                return
+            }
 
             do {
                 let json = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [String:Any]
 
                 if let jsonData = json, jsonData["status"] as? Int == 440 {
                     Constants.mobileLiveChatSessionID = ""
+                    UserDefaults.standard.set("", forKey: "easychat_mobile_livechat_session_id")
+                    UserDefaults.standard.removeObject(forKey: "easychat_mobile_livechat_session_timestamp")
                 }
 
             } catch let error as NSError {
                 print(error)
             }
+
+            DispatchQueue.main.async { completion() }
         }
 
         task.resume()
@@ -117,8 +128,28 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
     
 //  Display & configure webview while token verification is true
     public func dispWebView(viewController: UIViewController) {
+
+        if Constants.mobileUserID.isEmpty {
+            Constants.mobileUserID = UserDefaults.standard.string(forKey: "easychat_mobile_user_id") ?? ""
+        }
+        if Constants.mobileChatbotSessionID.isEmpty {
+            Constants.mobileChatbotSessionID = UserDefaults.standard.string(forKey: "easychat_mobile_session_id") ?? ""
+        }
+        if Constants.mobileLiveChatSessionID.isEmpty {
+            let savedLivechatId = UserDefaults.standard.string(forKey: "easychat_mobile_livechat_session_id") ?? ""
+            let savedTimestamp = UserDefaults.standard.double(forKey: "easychat_mobile_livechat_session_timestamp")
+            if !savedLivechatId.isEmpty && savedTimestamp > 0 {
+                let elapsed = Date().timeIntervalSince1970 - savedTimestamp
+                if elapsed <= 30 * 60 {
+                    Constants.mobileLiveChatSessionID = savedLivechatId
+                } else {
+                    UserDefaults.standard.set("", forKey: "easychat_mobile_livechat_session_id")
+                    UserDefaults.standard.removeObject(forKey: "easychat_mobile_livechat_session_timestamp")
+                }
+            }
+        }
         
-        verifyLiveChatSessionID(viewController: self)
+        verifyLiveChatSessionID { [self] in
         if Constants.isTokenVerify {
             let config: WKWebViewConfiguration = WKWebViewConfiguration()
             config.preferences.javaScriptCanOpenWindowsAutomatically = true
@@ -128,6 +159,7 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
             config.userContentController.add(self, name: "textToVoice")
             config.userContentController.add(self, name: "terminateTextToVoice")
             config.userContentController.add(self, name: "reloadChatbot")
+            config.userContentController.add(self, name: "setChatbotUserId")
             config.userContentController.add(self, name: "setChatbotSessionID")
             config.userContentController.add(self, name: "setLiveChatSessionID")
             config.userContentController.add(self, name: "reloadChatbotForLiveChat")
@@ -160,10 +192,20 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
             webView?.translatesAutoresizingMaskIntoConstraints = true
             webView?.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             
+            if !Constants.mobileChatbotSessionID.isEmpty {
+                let cookieScript = WKUserScript(
+                    source: "document.cookie='easychat_prev_session_id=\(Constants.mobileChatbotSessionID);path=/;SameSite=None;Secure';",
+                    injectionTime: .atDocumentStart,
+                    forMainFrameOnly: true
+                )
+                config.userContentController.addUserScript(cookieScript)
+            }
+            
             guard let wv = webView else { return }
             webViewController.view.addSubview(wv)
 //  Change string url to with verified url
-            if let _url = URL(string: Constants.botUrl + "/chat/index/?id=" + Constants.botId + "&channel=iOS&mobile_session_id=" + Constants.mobileChatbotSessionID + "&livechat_session_id=" + Constants.mobileLiveChatSessionID + "&selected_language=" + Constants.chatbotSelectedLanguage + "&" + Constants.customParams) {
+            let urlString = Constants.botUrl + "/chat/index/?id=" + Constants.botId + "&channel=iOS&mobile_user_id=" + Constants.mobileUserID + "&livechat_session_id=" + Constants.mobileLiveChatSessionID + "&selected_language=" + Constants.chatbotSelectedLanguage + "&" + Constants.customParams
+            if let _url = URL(string: urlString) {
                 let request = URLRequest(url: _url)
                 webView?.load(request)
             }
@@ -172,6 +214,7 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
             webViewGlobal = wv
 
             webViewController.view.addSubview(wv)
+        }
         }
     }
     
@@ -319,9 +362,14 @@ extension ChatbotSDK: WKScriptMessageHandler {
             synth.stopSpeaking(at: .immediate)
         } else if message.name == "reloadChatbot" {
             // comment this line as user id should not be reset while reloading chatbot
-            // Constants.mobileChatbotSessionID  = ""
+            // Constants.mobileUserID  = ""
             Constants.mobileLiveChatSessionID = ""
-            if let _url = URL(string: Constants.botUrl + "/chat/index/?id=" + Constants.botId + "&channel=iOS&mobile_session_id=" + Constants.mobileChatbotSessionID + "&livechat_session_id=" + Constants.mobileLiveChatSessionID + "&selected_language=" + Constants.chatbotSelectedLanguage) {
+            Constants.mobileChatbotSessionID = ""
+            UserDefaults.standard.set("", forKey: "easychat_mobile_session_id")
+            UserDefaults.standard.set("", forKey: "easychat_mobile_livechat_session_id")
+            UserDefaults.standard.removeObject(forKey: "easychat_mobile_livechat_session_timestamp")
+            webViewGlobal.configuration.userContentController.removeAllUserScripts()
+            if let _url = URL(string: Constants.botUrl + "/chat/index/?id=" + Constants.botId + "&channel=iOS&mobile_user_id=" + Constants.mobileUserID + "&livechat_session_id=" + Constants.mobileLiveChatSessionID + "&selected_language=" + Constants.chatbotSelectedLanguage) {
                 let request = URLRequest(url: _url)
                 webViewGlobal.load(request)
             }
@@ -329,19 +377,31 @@ extension ChatbotSDK: WKScriptMessageHandler {
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1){
                 
-                if let _url = URL(string: Constants.botUrl + "/chat/index/?id=" + Constants.botId + "&channel=iOS&mobile_session_id=" + Constants.mobileChatbotSessionID + "&livechat_session_id=" + Constants.mobileLiveChatSessionID + "&selected_language=" + Constants.chatbotSelectedLanguage) {
+                if let _url = URL(string: Constants.botUrl + "/chat/index/?id=" + Constants.botId + "&channel=iOS&mobile_user_id=" + Constants.mobileUserID + "&livechat_session_id=" + Constants.mobileLiveChatSessionID + "&selected_language=" + Constants.chatbotSelectedLanguage) {
                     let request = URLRequest(url: _url)
                     self.webViewGlobal.load(request)
                 }
             }
+        } else if message.name == "setChatbotUserId" {
+            let sentData = message.body as! Dictionary<String, String>
+            Constants.mobileUserID = sentData["mobile_user_id"] ?? ""
+            UserDefaults.standard.set(Constants.mobileUserID, forKey: "easychat_mobile_user_id")
+
         } else if message.name == "setChatbotSessionID" {
-            
             let sentData = message.body as! Dictionary<String, String>
             Constants.mobileChatbotSessionID = sentData["mobile_session_id"] ?? ""
+            UserDefaults.standard.set(Constants.mobileChatbotSessionID, forKey: "easychat_mobile_session_id")
+
         } else if message.name == "setLiveChatSessionID" {
             
             let sentData = message.body as! Dictionary<String, String>
             Constants.mobileLiveChatSessionID = sentData["livechat_session_id"] ?? ""
+            UserDefaults.standard.set(Constants.mobileLiveChatSessionID, forKey: "easychat_mobile_livechat_session_id")
+            if Constants.mobileLiveChatSessionID.isEmpty {
+                UserDefaults.standard.removeObject(forKey: "easychat_mobile_livechat_session_timestamp")
+            } else {
+                UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "easychat_mobile_livechat_session_timestamp")
+            }
         } else if message.name == "setSelectedLanguage" {
             
             let sentData = message.body as! Dictionary<String, String>
@@ -391,5 +451,3 @@ extension WKWebView {
         self.configuration.processPool = WKProcessPool()
     }
 }
-
-
