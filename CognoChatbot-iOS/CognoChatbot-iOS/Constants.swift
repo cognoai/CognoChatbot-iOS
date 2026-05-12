@@ -20,4 +20,5 @@ public class Constants {
     public static var mobileLiveChatSessionID = ""
     public static var chatbotSelectedLanguage = "en"
     public static var customParams = ""
+    public static var isLiveChatExpiredOnResume = false
 }
