@@ -111,6 +111,7 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
 
                 if let jsonData = json, jsonData["status"] as? Int == 440 {
                     Constants.mobileLiveChatSessionID = ""
+                    Constants.isLiveChatExpiredOnResume = true
                     UserDefaults.standard.set("", forKey: "easychat_mobile_livechat_session_id")
                     UserDefaults.standard.removeObject(forKey: "easychat_mobile_livechat_session_timestamp")
                 }
@@ -204,7 +205,11 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
             guard let wv = webView else { return }
             webViewController.view.addSubview(wv)
 //  Change string url to with verified url
-            let urlString = Constants.botUrl + "/chat/index/?id=" + Constants.botId + "&channel=iOS&mobile_user_id=" + Constants.mobileUserID + "&livechat_session_id=" + Constants.mobileLiveChatSessionID + "&selected_language=" + Constants.chatbotSelectedLanguage + "&" + Constants.customParams
+            var urlString = Constants.botUrl + "/chat/index/?id=" + Constants.botId + "&channel=iOS&mobile_user_id=" + Constants.mobileUserID + "&livechat_session_id=" + Constants.mobileLiveChatSessionID + "&selected_language=" + Constants.chatbotSelectedLanguage + "&" + Constants.customParams
+            if Constants.isLiveChatExpiredOnResume {
+                urlString += "&livechat_expired=true"
+                Constants.isLiveChatExpiredOnResume = false
+            }
             if let _url = URL(string: urlString) {
                 let request = URLRequest(url: _url)
                 webView?.load(request)
