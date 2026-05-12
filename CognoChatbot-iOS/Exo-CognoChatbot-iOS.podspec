@@ -1,7 +1,7 @@
 Pod::Spec.new do |spec|
 
   spec.name         = "Exo-CognoChatbot-iOS"
-  spec.version      = "7.0.1"
+  spec.version      = "7.0.2"
   spec.summary      = "Simple chatbot SDK"
   spec.description  = "Chatbot SDK/ Framework ready to available with all types of iOS applications"
   spec.homepage     = "https://github.com/cognoai/CognoChatbot-iOS.git"
