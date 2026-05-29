@@ -163,7 +163,7 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
             guard let wv = webView else { return }
             webViewController.view.addSubview(wv)
 //  Change string url to with verified url
-            if let _url = URL(string: Constants.botUrl + "/chat/index/?id=" + Constants.botId + "&channel=iOS&mobile_session_id=" + Constants.mobileChatbotSessionID + "&livechat_session_id=" + Constants.mobileLiveChatSessionID + "&selected_language=" + Constants.chatbotSelectedLanguage + "&" + Constants.customParams) {
+            if let _url = chatbotIndexURL(includeCustomParams: true) {
                 let request = URLRequest(url: _url)
                 webView?.load(request)
             }
@@ -254,6 +254,28 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
         return nil
     }
 
+    private func chatbotIndexURL(includeCustomParams: Bool = false) -> URL? {
+        var urlString = Constants.botUrl + "/chat/index/?id=" + Constants.botId + "&channel=iOS&mobile_session_id=" + Constants.mobileChatbotSessionID + "&livechat_session_id=" + Constants.mobileLiveChatSessionID + "&selected_language=" + Constants.chatbotSelectedLanguage
+
+        if let campaignLinkQueryId = Constants.campaignLinkQueryId {
+            urlString += "&campaign_link_query_id=\(campaignLinkQueryId)"
+        }
+
+        if let hideWelcomeMessageAtStart = Constants.hideWelcomeMessageAtStart {
+            urlString += "&hide_welcome_message_at_start=\(hideWelcomeMessageAtStart)"
+        }
+
+        if includeCustomParams && !Constants.customParams.isEmpty {
+            if Constants.customParams.hasPrefix("&") {
+                urlString += Constants.customParams
+            } else {
+                urlString += "&" + Constants.customParams
+            }
+        }
+
+        return URL(string: urlString)
+    }
+
 }
 
 //  Handle User response for Webview Interface
@@ -321,7 +343,7 @@ extension ChatbotSDK: WKScriptMessageHandler {
             // comment this line as user id should not be reset while reloading chatbot
             // Constants.mobileChatbotSessionID  = ""
             Constants.mobileLiveChatSessionID = ""
-            if let _url = URL(string: Constants.botUrl + "/chat/index/?id=" + Constants.botId + "&channel=iOS&mobile_session_id=" + Constants.mobileChatbotSessionID + "&livechat_session_id=" + Constants.mobileLiveChatSessionID + "&selected_language=" + Constants.chatbotSelectedLanguage) {
+            if let _url = chatbotIndexURL() {
                 let request = URLRequest(url: _url)
                 webViewGlobal.load(request)
             }
@@ -329,7 +351,7 @@ extension ChatbotSDK: WKScriptMessageHandler {
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1){
                 
-                if let _url = URL(string: Constants.botUrl + "/chat/index/?id=" + Constants.botId + "&channel=iOS&mobile_session_id=" + Constants.mobileChatbotSessionID + "&livechat_session_id=" + Constants.mobileLiveChatSessionID + "&selected_language=" + Constants.chatbotSelectedLanguage) {
+                if let _url = self.chatbotIndexURL() {
                     let request = URLRequest(url: _url)
                     self.webViewGlobal.load(request)
                 }
