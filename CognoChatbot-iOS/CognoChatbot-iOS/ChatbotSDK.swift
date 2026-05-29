@@ -255,7 +255,11 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
     }
 
     private func chatbotIndexURL(includeCustomParams: Bool = false) -> URL? {
-        var urlString = Constants.botUrl + "/chat/index/?id=" + Constants.botId + "&channel=iOS&mobile_session_id=" + Constants.mobileChatbotSessionID + "&livechat_session_id=" + Constants.mobileLiveChatSessionID + "&selected_language=" + Constants.chatbotSelectedLanguage
+        var urlString = Constants.botUrl + "/chat/index/?id=" + Constants.botId
+        urlString += "&channel=iOS"
+        urlString += "&mobile_session_id=" + Constants.mobileChatbotSessionID
+        urlString += "&livechat_session_id=" + Constants.mobileLiveChatSessionID
+        urlString += "&selected_language=" + Constants.chatbotSelectedLanguage
 
         if let campaignLinkQueryId = Constants.campaignLinkQueryId {
             urlString += "&campaign_link_query_id=\(campaignLinkQueryId)"
