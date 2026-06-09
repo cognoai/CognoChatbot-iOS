@@ -163,7 +163,7 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
             guard let wv = webView else { return }
             webViewController.view.addSubview(wv)
 //  Change string url to with verified url
-            if let _url = chatbotIndexURL(includeCustomParams: true) {
+            if let _url = chatbotIndexURL() {
                 let request = URLRequest(url: _url)
                 webView?.load(request)
             }
@@ -254,7 +254,7 @@ public class ChatbotSDK: UIViewController, UIWebViewDelegate, WKUIDelegate, WKNa
         return nil
     }
 
-    private func chatbotIndexURL(includeCustomParams: Bool = false) -> URL? {
+    private func chatbotIndexURL(includeCustomParams: Bool = true) -> URL? {
         var urlString = Constants.botUrl + "/chat/index/?id=" + Constants.botId
         urlString += "&channel=iOS"
         urlString += "&mobile_session_id=" + Constants.mobileChatbotSessionID
@@ -347,7 +347,7 @@ extension ChatbotSDK: WKScriptMessageHandler {
             // comment this line as user id should not be reset while reloading chatbot
             // Constants.mobileChatbotSessionID  = ""
             Constants.mobileLiveChatSessionID = ""
-            if let _url = chatbotIndexURL(includeCustomParams: true) {
+            if let _url = chatbotIndexURL() {
                 let request = URLRequest(url: _url)
                 webViewGlobal.load(request)
             }
@@ -355,7 +355,7 @@ extension ChatbotSDK: WKScriptMessageHandler {
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1){
                 
-                if let _url = self.chatbotIndexURL(includeCustomParams: true) {
+                if let _url = self.chatbotIndexURL() {
                     let request = URLRequest(url: _url)
                     self.webViewGlobal.load(request)
                 }
