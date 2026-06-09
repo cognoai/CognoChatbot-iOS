@@ -347,7 +347,7 @@ extension ChatbotSDK: WKScriptMessageHandler {
             // comment this line as user id should not be reset while reloading chatbot
             // Constants.mobileChatbotSessionID  = ""
             Constants.mobileLiveChatSessionID = ""
-            if let _url = chatbotIndexURL() {
+            if let _url = chatbotIndexURL(includeCustomParams: true) {
                 let request = URLRequest(url: _url)
                 webViewGlobal.load(request)
             }
@@ -355,7 +355,7 @@ extension ChatbotSDK: WKScriptMessageHandler {
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1){
                 
-                if let _url = self.chatbotIndexURL() {
+                if let _url = self.chatbotIndexURL(includeCustomParams: true) {
                     let request = URLRequest(url: _url)
                     self.webViewGlobal.load(request)
                 }
