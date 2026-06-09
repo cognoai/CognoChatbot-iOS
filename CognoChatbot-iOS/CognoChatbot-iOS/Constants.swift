@@ -19,4 +19,6 @@ public class Constants {
     public static var mobileLiveChatSessionID = ""
     public static var chatbotSelectedLanguage = "en"
     public static var customParams = ""
+    public static var campaignLinkQueryId: Int? = nil
+    public static var hideWelcomeMessageAtStart: Bool? = nil
 }
