@@ -59,12 +59,29 @@ chatbot.verifyToken(viewController: self) { verified in
 The app's `Info.plist` needs `NSMicrophoneUsageDescription` and
 `NSSpeechRecognitionUsageDescription` for voice input.
 
-The full integration guide is the **Integration Document** on the bot's iOS channel
-page in the EasyChat console.
+### Configuration
+
+Set these on `Constants` before calling `verifyToken`:
+
+| Property | Required | Meaning |
+|---|---|---|
+| `botUrl` | yes | Your EasyChat domain, e.g. `https://<your-easychat-domain>` (no trailing slash) |
+| `botId` | yes | Bot ID, from the bot's iOS channel page in the EasyChat console |
+| `accessToken` | yes | Bot access token, from the same page |
+| `chatbotSelectedLanguage` | no | Language code to open the bot in; default `en` |
+| `customParams` | no | Extra query parameters for the bot, e.g. `"user_id=42&city=Dubai"`; values must already be URL-encoded |
+| `campaignLinkQueryId` | no | Campaign link query ID, when the bot is opened from a campaign link |
+| `hideWelcomeMessageAtStart` | no | `true` hides the welcome message when the bot opens |
+
+`verifyToken` checks the token with the EasyChat server and, on success, presents the
+chatbot full screen. After that, `dispWebView(viewController:)` presents it again.
+
+Known limit: the video recorder widget does not work inside the WebView.
 
 ## Requirements
 
 - iOS 12+
+- Xcode 14+ (the package uses swift-tools-version 5.7)
 - Swift 5, no third-party dependencies (Foundation, WebKit, AVFoundation, Speech)
 
 ## Build and test
@@ -85,7 +102,9 @@ A release is a git tag; there is nothing to upload.
 1. Merge to `v8.0-version-master`.
 2. Tag that commit with the next version and push the tag:
    `git tag 8.0.3 && git push origin 8.0.3`.
-3. Never move or delete a pushed tag — apps pin to what it pointed at. Ship a fix as a new tag.
+3. In EasyChat, bump the tag in the iOS "Integration Document" link
+   (`EasyChatApp/templates/EasyChatApp/channels/ios_channel.html`) to the new version.
+4. Never move or delete a pushed tag — apps pin to what it pointed at. Ship a fix as a new tag.
 
 `CognoChatbot-iOS/Exo-CognoChatbot-iOS.podspec` stays only as the record of the last
 CocoaPods release (8.0.1); do not bump or push it.
