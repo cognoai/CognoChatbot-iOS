@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "prodengg": {
-      "type": "http",
-      "url": "https://mcp.prod.cc.exotel.com/mcp"
-    }
-  }
-}
